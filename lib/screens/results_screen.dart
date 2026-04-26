@@ -4,6 +4,7 @@ import '../services/bus_service.dart';
 import '../services/transfer_service.dart';
 import 'detail_screen.dart';
 import 'map_screen.dart';
+import 'transfer_detail_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
   final String from;
@@ -209,6 +210,8 @@ class _SuggestionsList extends StatelessWidget {
             child: _SuggestionCard(
               suggestion: s,
               isBest: s.totalFare == cheapest,
+              from: from,
+              to: to,
             ),
           ),
       ],
@@ -219,7 +222,14 @@ class _SuggestionsList extends StatelessWidget {
 class _SuggestionCard extends StatelessWidget {
   final TransferSuggestion suggestion;
   final bool isBest;
-  const _SuggestionCard({required this.suggestion, required this.isBest});
+  final String from;
+  final String to;
+  const _SuggestionCard({
+    required this.suggestion,
+    required this.isBest,
+    required this.from,
+    required this.to,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +244,19 @@ class _SuggestionCard extends StatelessWidget {
             ? BorderSide(color: theme.colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => TransferDetailScreen(
+              suggestion: s,
+              from: from,
+              to: to,
+              isBest: isBest,
+            ),
+          ),
+        ),
+        child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,8 +352,22 @@ class _SuggestionCard extends StatelessWidget {
                   ),
                 ),
               ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Spacer(),
+                Text('View details',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    )),
+                Icon(Icons.chevron_right,
+                    size: 16, color: theme.colorScheme.primary),
+              ],
+            ),
           ],
         ),
+      ),
       ),
     );
   }

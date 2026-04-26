@@ -4,41 +4,73 @@ import 'package:latlong2/latlong.dart';
 
 import '../data/stop_coords.dart';
 import '../services/bus_service.dart';
+import '../services/road_routing_service.dart';
 
 /// Real-world map view of a single bus route, rendered with OpenStreetMap
-/// tiles (no API key, free for non-commercial use). The polyline traces the
-/// bus's path between [match.fromStop] and [match.toStop]; large green
-/// markers mark the From/To stops; smaller amber markers mark intermediate
-/// stops on the segment; tiny grey markers mark all other stops on the
-/// route for context.
-class MapScreen extends StatelessWidget {
+/// tiles (no API key, free for non-commercial use). The polyline first
+/// renders as straight chords between bundled stop coordinates, then is
+/// upgraded asynchronously to a road-following polyline via the OSRM demo
+/// server (no key required). On network failure we keep the straight line.
+class MapScreen extends StatefulWidget {
   final BusMatch match;
 
   const MapScreen({super.key, required this.match});
 
   @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  List<LatLng>? _roadSegment;
+  bool _routingFailed = false;
+  bool _routingLoading = true;
+
+  late final List<LatLng> _positioned;
+  late final List<LatLng> _segmentPoints;
+  late final int _lo;
+  late final int _hi;
+
+  @override
+  void initState() {
+    super.initState();
+    final m = widget.match;
+    _lo = m.fromIndex < m.toIndex ? m.fromIndex : m.toIndex;
+    _hi = m.fromIndex < m.toIndex ? m.toIndex : m.fromIndex;
+    _positioned = _resolvePoints(m.route.stops);
+    _segmentPoints = [
+      for (int i = _lo; i <= _hi; i++) _positioned[i],
+    ];
+    _kickOffRouting();
+  }
+
+  Future<void> _kickOffRouting() async {
+    final result = await RoadRoutingService.route(_segmentPoints);
+    if (!mounted) return;
+    setState(() {
+      _routingLoading = false;
+      if (result != null && result.length > 1) {
+        _roadSegment = result;
+      } else {
+        _routingFailed = true;
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final match = widget.match;
     final stops = match.route.stops;
+    final positioned = _positioned;
+    final segmentPoints = _segmentPoints;
+    final lo = _lo;
+    final hi = _hi;
 
-    final lo = match.fromIndex < match.toIndex
-        ? match.fromIndex
-        : match.toIndex;
-    final hi = match.fromIndex < match.toIndex
-        ? match.toIndex
-        : match.fromIndex;
-
-    // Resolve a coordinate for every stop. Stops without explicit coords are
-    // interpolated between their nearest known neighbours.
-    final positioned = _resolvePoints(stops);
-
-    final segmentPoints = <LatLng>[
-      for (int i = lo; i <= hi; i++) positioned[i],
-    ];
+    final renderedSegment = _roadSegment ?? segmentPoints;
 
     // Frame the map around the segment with a little padding.
     final bounds = LatLngBounds.fromPoints(
-      segmentPoints.isEmpty ? positioned : segmentPoints,
+      renderedSegment.isEmpty ? positioned : renderedSegment,
     );
 
     return Scaffold(
@@ -70,6 +102,34 @@ class MapScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: _Legend(theme: theme),
             ),
+            if (_routingLoading)
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('Snapping route to roads…',
+                        style: theme.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            if (_routingFailed)
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: Text(
+                  'Offline — showing straight-line route. Connect to the '
+                  'internet for road-following polyline.',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: Colors.amber.shade900),
+                ),
+              ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -102,9 +162,10 @@ class MapScreen extends StatelessWidget {
                             pattern: StrokePattern.dashed(
                                 segments: const [8, 6]),
                           ),
-                          // Highlighted travelled segment
+                          // Highlighted travelled segment (road-following
+                          // when OSRM responds, otherwise straight chords).
                           Polyline(
-                            points: segmentPoints,
+                            points: renderedSegment,
                             strokeWidth: 6,
                             color: theme.colorScheme.primary,
                           ),

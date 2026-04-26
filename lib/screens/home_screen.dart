@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/bus_service.dart';
 import '../services/recent_searches.dart';
 import '../widgets/stop_picker.dart';
+import 'bus_search_screen.dart';
+import 'fare_chart_screen.dart';
 import 'results_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -104,6 +106,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   textStyle: theme.textTheme.titleMedium,
                 ),
               ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MenuTile(
+                      icon: Icons.list_alt_rounded,
+                      label: 'Full Fare Chart',
+                      sublabel: 'Browse all PDF corridors',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const FareChartScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MenuTile(
+                      icon: Icons.directions_bus_rounded,
+                      label: 'Search by Bus',
+                      sublabel: 'Find a bus by name',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BusSearchScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               if (_recents.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 Row(
@@ -142,6 +174,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String sublabel;
+  final VoidCallback onTap;
+
+  const _MenuTile({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: theme.colorScheme.primary),
+              const SizedBox(height: 8),
+              Text(label,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(sublabel,
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             ],
           ),
         ),

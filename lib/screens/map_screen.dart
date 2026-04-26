@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../data/stop_coords.dart';
 import '../services/bus_service.dart';
+import '../services/offline_tile_provider.dart';
 import '../services/road_routing_service.dart';
 
 /// Real-world map view of a single bus route, rendered with OpenStreetMap
@@ -146,8 +147,13 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                     children: [
                       TileLayer(
+                        // OfflineTileProvider serves z10-14 tiles around
+                        // Dhaka from the bundled APK assets and falls
+                        // back to OSM network only for tiles outside the
+                        // bundled box (other cities, deeper zooms, etc.).
+                        tileProvider: OfflineTileProvider(),
                         urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'assets/tiles/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.dhaka.bus_finder',
                         maxZoom: 19,
                       ),

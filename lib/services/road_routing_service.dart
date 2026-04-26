@@ -54,9 +54,14 @@ class RoadRoutingService {
         final geom = (routes.first as Map<String, dynamic>)['geometry']
             as Map<String, dynamic>;
         final coordsList = geom['coordinates'] as List<dynamic>;
+        // OSRM GeoJSON coordinates can be int or double in JSON; cast via
+        // `num` so whole-number values (e.g. `90` not `90.0`) don't throw.
         final pts = [
           for (final c in coordsList)
-            LatLng((c as List)[1] as double, c[0] as double),
+            LatLng(
+              ((c as List)[1] as num).toDouble(),
+              (c[0] as num).toDouble(),
+            ),
         ];
         // Avoid duplicating the join point between chunks.
         if (out.isNotEmpty && pts.isNotEmpty) {

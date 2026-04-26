@@ -47,17 +47,40 @@ class FareResult {
 /// Computes fares for a (route, fromIndex, toIndex) triple.
 ///
 /// Resolution order:
-/// 1. Look up the (fromStop, toStop) pair across **every PDF corridor**.
-///    If any corridor visits both stops we read the cumulative km from the
-///    PDF directly and label the result **Official Fare**.
-/// 2. Fall back to the curated adjacent-leg distances in `fare_data.dart`
-///    and label the result **Estimated Fare**.
+/// 1. **Route-specific PDF distance**. If the requested route's name appears
+///    in [routeCumulativeKm] *and* its cumulative-km list is parallel to
+///    `route.stops`, we use the route's own PDF page directly — this is
+///    the most accurate path, because two operators traveling between the
+///    same two endpoints can take physically different roads with different
+///    distances.
+/// 2. **Cross-corridor PDF lookup**. Search every transcribed PDF corridor
+///    for one that visits both stops and pick the median distance.
+/// 3. **Adjacent-leg estimate**. Fall back to the curated `adjacentStopKm`
+///    table and label the result **Estimated Fare**.
 class FareService {
   /// Compute the fare for travelling between `route.stops[fromIdx]` and
   /// `route.stops[toIdx]`.
   static FareResult compute(BusRoute route, int fromIdx, int toIdx) {
     final fromStop = route.stops[fromIdx];
     final toStop = route.stops[toIdx];
+
+    // (1) Route-specific PDF distance if available. The list in
+    // `routeCumulativeKm` is parallel to `BusRoute.stops` for that route, so
+    // we can read the cumulative km at each end and subtract.
+    final cumKm = routeCumulativeKm[route.name];
+    if (cumKm != null && cumKm.length == route.stops.length) {
+      final lo = fromIdx < toIdx ? fromIdx : toIdx;
+      final hi = fromIdx < toIdx ? toIdx : fromIdx;
+      final km = (cumKm[hi] - cumKm[lo]).abs();
+      if (km > 0) {
+        return FareResult(
+          amount: fareFromKm(km),
+          distanceKm: km,
+          source: FareSource.official,
+          corridorLabel: '${route.name} (PDF)',
+        );
+      }
+    }
 
     final official = lookupOfficial(fromStop, toStop);
     if (official != null) return official;

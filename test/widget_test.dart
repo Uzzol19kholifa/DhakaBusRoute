@@ -138,6 +138,23 @@ void main() {
     expect(corridor.findStop('Mirpur 10')?.km, equals(0));
   });
 
+  test('FareService.compute uses route-specific cumulative km when available',
+      () {
+    // Achim Paribahan: Gabtoli (cum 0) → Demra Staff Quarter (cum 28),
+    // physical path via Mirpur. The corridor-name-agnostic lookup would
+    // pick A-377's 23.8 km path via Science Lab, which is wrong for this
+    // operator. The route-specific lookup must give 28 km / ৳71.
+    final matches = BusService.findBuses('Gabtoli', 'Demra Staff Quarter');
+    final achim = matches.firstWhere(
+      (m) => m.route.name == 'Achim Paribahan',
+      orElse: () => throw StateError(
+          'No Achim Paribahan match for Gabtoli → Demra Staff Quarter'),
+    );
+    expect(achim.fare.isOfficial, isTrue);
+    expect(achim.fare.distanceKm, closeTo(28.0, 0.05));
+    expect(achim.fare.amount, equals(71));
+  });
+
   test('TransferService finds 1-transfer suggestions when no direct bus',
       () {
     // Two stops we don't expect to be on the same route.

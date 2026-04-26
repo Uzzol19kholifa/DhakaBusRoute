@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dhaka_bus_finder/main.dart';
@@ -26,12 +25,26 @@ void main() {
     }
   });
 
-  test('BusService.fareFor falls back to per-km estimate above the minimum',
-      () {
+  test('BusMatch carries a fare result with source label', () {
     final matches = BusService.findBuses('Gabtoli', 'Airport');
     expect(matches, isNotEmpty);
-    final fare = BusService.fareFor(matches.first);
-    expect(fare, greaterThanOrEqualTo(10));
+    final fare = matches.first.fare;
+    expect(fare.amount, greaterThanOrEqualTo(10));
+    expect(
+      [FareSource.official, FareSource.estimated].contains(fare.source),
+      isTrue,
+    );
+    expect(fare.distanceKm, greaterThan(0));
+  });
+
+  test('BusService.headlineFare picks the cheapest fare', () {
+    final matches = BusService.findBuses('Mirpur 10', 'Motijheel');
+    if (matches.isEmpty) return;
+    final headline = BusService.headlineFare(matches);
+    expect(headline, isNotNull);
+    final cheapest =
+        matches.map((m) => m.fare.amount).reduce((a, b) => a < b ? a : b);
+    expect(headline!.amount, equals(cheapest));
   });
 
   test('BusService.allStops returns a sorted, deduplicated list', () {

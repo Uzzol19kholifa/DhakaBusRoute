@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../services/bus_service.dart';
+import 'map_screen.dart';
 
 /// Detail screen for a single bus, highlighting the user's selected
 /// from/to stops and the segment between them.
 class DetailScreen extends StatelessWidget {
   final BusMatch match;
-  final int fare;
 
-  const DetailScreen({super.key, required this.match, required this.fare});
+  const DetailScreen({super.key, required this.match});
+
+  int get fare => match.fare.amount;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,19 @@ class DetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(route.name),
+        actions: [
+          IconButton(
+            tooltip: 'View Map',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => MapScreen(match: match),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -71,12 +86,20 @@ class DetailScreen extends StatelessWidget {
                             label: route.serviceType,
                           ),
                           _Pill(
-                            icon: Icons.payments_outlined,
-                            label: 'Fare ৳$fare',
+                            icon: match.fare.isOfficial
+                                ? Icons.verified_rounded
+                                : Icons.calculate_outlined,
+                            label:
+                                '${match.fare.isOfficial ? "Official" : "Estimated"} ৳$fare',
                           ),
                           _Pill(
                             icon: Icons.alt_route,
                             label: '${match.stopsBetween} stops',
+                          ),
+                          _Pill(
+                            icon: Icons.straighten,
+                            label:
+                                '${match.fare.distanceKm.toStringAsFixed(1)} km',
                           ),
                         ],
                       ),
@@ -94,6 +117,18 @@ class DetailScreen extends StatelessWidget {
                   Text(
                     'Stops on this bus',
                     style: theme.textTheme.titleMedium,
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MapScreen(match: match),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.map_outlined, size: 18),
+                    label: const Text('View Map'),
                   ),
                 ],
               ),

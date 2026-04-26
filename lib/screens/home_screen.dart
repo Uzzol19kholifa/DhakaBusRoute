@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/bus_service.dart';
 import '../services/fare_disclaimer.dart';
@@ -182,30 +183,69 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               const SizedBox(height: 32),
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      'Created by Md Rukon Kholifa',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Dhaka Bus Finder',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              Center(child: _CreditFooter()),
               const SizedBox(height: 12),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CreditFooter extends StatelessWidget {
+  static final Uri _profileUri =
+      Uri.parse('https://www.facebook.com/mdrukon.kholifa');
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () async {
+        final ok = await launchUrl(
+          _profileUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!ok && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open Facebook profile')),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Created by Md Rukon Kholifa',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                    decorationColor: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.open_in_new_rounded,
+                  size: 12,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Dhaka Bus Finder',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant
+                    .withValues(alpha: 0.7),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dhaka_bus_finder/main.dart';
+import 'package:dhaka_bus_finder/data/pdf_corridors.dart';
 import 'package:dhaka_bus_finder/services/bus_service.dart';
 import 'package:dhaka_bus_finder/services/fare_service.dart';
+import 'package:dhaka_bus_finder/services/stop_matching.dart';
 import 'package:dhaka_bus_finder/services/transfer_service.dart';
 
 void main() {
@@ -77,6 +79,29 @@ void main() {
     // |33.0 - 22.1| = 10.9 km × 2.53 = 27.577 → ৳28
     expect(fare.distanceKm, closeTo(10.9, 0.05));
     expect(fare.amount, equals(28));
+  });
+
+  test('stopNameMatches is digit-aware (Mirpur 1 ≠ Mirpur 10)', () {
+    expect(stopNameMatches('Mirpur 1', 'Mirpur 1'), isTrue);
+    expect(stopNameMatches('Mirpur 1', 'Mirpur 10'), isFalse);
+    expect(stopNameMatches('Mirpur 10', 'Mirpur 1'), isFalse);
+    expect(stopNameMatches('Mirpur 11', 'Mirpur 1'), isFalse);
+    // Non-numeric prefixes still match.
+    expect(stopNameMatches('Mirpur', 'Mirpur 10'), isTrue);
+    expect(stopNameMatches('Khilgaon', 'Khilgaon Flyover'), isTrue);
+  });
+
+  test('PdfCorridor.findStop does not match Mirpur 1 inside Mirpur 10', () {
+    // Build a corridor that has Mirpur 10 but not Mirpur 1, and verify
+    // findStop('Mirpur 1') returns null instead of the false positive.
+    const corridor = PdfCorridor(
+      code: 'TEST-1',
+      label: 'test',
+      totalKm: 5,
+      stops: [PdfStop('Mirpur 10', 0), PdfStop('Mirpur 11', 2.0)],
+    );
+    expect(corridor.findStop('Mirpur 1'), isNull);
+    expect(corridor.findStop('Mirpur 10')?.km, equals(0));
   });
 
   test('TransferService finds 1-transfer suggestions when no direct bus',

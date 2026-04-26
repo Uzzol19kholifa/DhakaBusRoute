@@ -45,8 +45,15 @@ class PdfCorridor {
     required this.stops,
   });
 
-  /// Look up a stop on this corridor by name (case-insensitive substring
-  /// match). Returns `null` if the corridor does not visit this stop.
+  /// Look up a stop on this corridor by name (case-insensitive, digit-aware
+  /// substring match — see `stop_matching.dart`). Returns `null` if the
+  /// corridor does not visit this stop.
+  ///
+  /// Digit-aware matching prevents "Mirpur 1" from spuriously matching
+  /// "Mirpur 10" / "Mirpur 11" / "Mirpur 12", which previously caused
+  /// `FareService.lookupOfficial` to pick the wrong corridor (and the
+  /// wrong distance) when several Mirpur-area corridors visit a numbered
+  /// stop.
   PdfStop? findStop(String name) {
     final q = name.toLowerCase().trim();
     if (q.isEmpty) return null;
@@ -55,10 +62,29 @@ class PdfCorridor {
       if (n == q) return s;
     }
     for (final s in stops) {
-      final n = s.name.toLowerCase();
-      if (n.contains(q) || q.contains(n)) return s;
+      if (_digitAwareMatch(s.name, name)) return s;
     }
     return null;
+  }
+
+  static bool _digitAwareMatch(String a, String b) {
+    final aa = a.toLowerCase().trim();
+    final bb = b.toLowerCase().trim();
+    if (aa.isEmpty || bb.isEmpty) return false;
+    if (aa == bb) return true;
+    return _containsBoundaryAware(aa, bb) || _containsBoundaryAware(bb, aa);
+  }
+
+  static bool _containsBoundaryAware(String haystack, String needle) {
+    final idx = haystack.indexOf(needle);
+    if (idx < 0) return false;
+    final before = idx == 0 ? null : haystack.codeUnitAt(idx - 1);
+    final afterIdx = idx + needle.length;
+    final after =
+        afterIdx >= haystack.length ? null : haystack.codeUnitAt(afterIdx);
+    if (before != null && before >= 0x30 && before <= 0x39) return false;
+    if (after != null && after >= 0x30 && after <= 0x39) return false;
+    return true;
   }
 }
 

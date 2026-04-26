@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../data/bus_data.dart';
-import '../data/fare_data.dart' show fareFromKm;
 import '../models/bus_route.dart';
 import '../services/fare_service.dart';
 
@@ -152,7 +151,6 @@ class _BusRouteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final origin = route.stops.first;
 
     return Scaffold(
       appBar: AppBar(title: Text(route.name)),
@@ -205,12 +203,7 @@ class _BusRouteScreen extends StatelessWidget {
               final isLast = i == route.stops.length - 1;
               FareResult? fare;
               if (!isFirst) {
-                fare = FareService.lookupOfficial(origin, stop);
-                fare ??= FareResult(
-                  amount: fareFromKm(_estimateKm(route, 0, i)),
-                  distanceKm: _estimateKm(route, 0, i),
-                  source: FareSource.estimated,
-                );
+                fare = FareService.compute(route, 0, i);
               }
               return _StopRow(
                 index: i,
@@ -226,11 +219,6 @@ class _BusRouteScreen extends StatelessWidget {
     );
   }
 
-  // Coarse adjacency-based fallback so we always have something to show.
-  // This matches the Estimated path used by FareService.
-  double _estimateKm(BusRoute route, int from, int to) {
-    return (to - from) * 1.0;
-  }
 }
 
 class _StopRow extends StatelessWidget {

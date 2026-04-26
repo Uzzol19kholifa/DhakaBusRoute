@@ -1,6 +1,7 @@
 import '../data/bus_data.dart';
 import '../models/bus_route.dart';
 import 'fare_service.dart';
+import 'stop_matching.dart';
 
 /// One leg of a transfer suggestion: ride [route] from [fromStop] to [toStop].
 class TransferLeg {
@@ -138,12 +139,7 @@ class TransferService {
     return suggestions.take(limit).toList();
   }
 
-  static bool _equivalent(String a, String b) {
-    final aa = a.toLowerCase().trim();
-    final bb = b.toLowerCase().trim();
-    if (aa == bb) return true;
-    return aa.contains(bb) || bb.contains(aa);
-  }
+  static bool _equivalent(String a, String b) => stopNameMatches(a, b);
 
   static int _findStopIndex(List<String> stops, String query) {
     final q = query.toLowerCase().trim();
@@ -152,8 +148,7 @@ class TransferService {
       if (stops[i].toLowerCase() == q) return i;
     }
     for (int i = 0; i < stops.length; i++) {
-      final s = stops[i].toLowerCase();
-      if (s.contains(q) || q.contains(s)) return i;
+      if (stopNameMatches(stops[i], query)) return i;
     }
     return -1;
   }

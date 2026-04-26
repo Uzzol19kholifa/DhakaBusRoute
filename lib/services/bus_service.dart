@@ -1,6 +1,7 @@
 import '../data/bus_data.dart';
 import '../models/bus_route.dart';
 import 'fare_service.dart';
+import 'stop_matching.dart';
 
 export 'fare_service.dart' show FareResult, FareSource;
 
@@ -52,11 +53,8 @@ class BusService {
     return list;
   }
 
-  static bool _stopMatches(String stop, String query) {
-    final s = stop.toLowerCase();
-    final q = query.toLowerCase();
-    return s.contains(q) || q.contains(s);
-  }
+  static bool _stopMatches(String stop, String query) =>
+      stopNameMatches(stop, query);
 
   static int _findStopIndex(List<String> stops, String query) {
     for (int i = 0; i < stops.length; i++) {

@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dhaka_bus_finder/main.dart';
 import 'package:dhaka_bus_finder/services/bus_service.dart';
+import 'package:dhaka_bus_finder/services/fare_service.dart';
+import 'package:dhaka_bus_finder/services/transfer_service.dart';
 
 void main() {
   testWidgets('Home screen renders the From / To pickers and search button',
@@ -53,5 +55,41 @@ void main() {
     final sorted = [...stops]..sort();
     expect(stops, equals(sorted));
     expect(stops.toSet().length, equals(stops.length));
+  });
+
+  // PDF-derived fare tests: these stops live on transcribed corridors so
+  // we should always get back an Official fare matching the PDF cell.
+  test('Sign Board → Khilgaon Flyover returns Official PDF fare', () {
+    final fare =
+        FareService.lookupOfficial('Sign Board', 'Khilgaon Flyover');
+    expect(fare, isNotNull, reason: 'Should be on the A-421 corridor');
+    expect(fare!.isOfficial, isTrue);
+    // 9.3 km × 2.53 BDT/km = 23.529 → ৳24
+    expect(fare.distanceKm, closeTo(9.3, 0.05));
+    expect(fare.amount, equals(24));
+  });
+
+  test('Zirabo → Abdullahpur returns Official PDF fare', () {
+    final fare = FareService.lookupOfficial('Zirabo', 'Abdullahpur');
+    expect(fare, isNotNull,
+        reason: 'Should be on the A-436 (Sadarghat → Bypail) corridor');
+    expect(fare!.isOfficial, isTrue);
+    // |33.0 - 22.1| = 10.9 km × 2.53 = 27.577 → ৳28
+    expect(fare.distanceKm, closeTo(10.9, 0.05));
+    expect(fare.amount, equals(28));
+  });
+
+  test('TransferService finds 1-transfer suggestions when no direct bus',
+      () {
+    // Two stops we don't expect to be on the same route.
+    final suggestions =
+        TransferService.findSuggestions('Demra Bridge', 'Khilgaon Flyover');
+    // Don't assert non-empty (depends on data) but if we do find any
+    // they should each have two distinct routes and a positive fare.
+    for (final s in suggestions) {
+      expect(s.first.route.name, isNot(equals(s.second.route.name)));
+      expect(s.totalFare, greaterThanOrEqualTo(20));
+      expect(s.totalStops, greaterThan(1));
+    }
   });
 }

@@ -1,16 +1,11 @@
 /// Approximate latitude / longitude for major Dhaka bus-stop landmarks.
 ///
-/// Coordinates are bundled at compile time so the map view works completely
-/// offline. They cover the most common arterial-route landmarks in the
-/// `allRoutes` dataset; stops not in this map are positioned by interpolating
-/// between their neighbours.
+/// Used by `MapScreen` (flutter_map + OSM tiles) to plot the route polyline
+/// and stop markers. Stops not present here are interpolated linearly from
+/// their neighbouring known coordinates at render time.
 library;
 
-class LatLng {
-  final double lat;
-  final double lng;
-  const LatLng(this.lat, this.lng);
-}
+import 'package:latlong2/latlong.dart';
 
 const Map<String, LatLng> stopCoordinates = {
   // --- Mirpur / North-west ---
@@ -21,6 +16,7 @@ const Map<String, LatLng> stopCoordinates = {
   'Shishu Mela': LatLng(23.7717, 90.3705),
   'College Gate': LatLng(23.7700, 90.3650),
   'Asad Gate': LatLng(23.7639, 90.3681),
+  'Asad Avenue': LatLng(23.7651, 90.3674),
   'Manik Mia Avenue': LatLng(23.7654, 90.3760),
   'Khamar Bari': LatLng(23.7670, 90.3815),
   'Farmgate': LatLng(23.7585, 90.3895),
@@ -30,19 +26,25 @@ const Map<String, LatLng> stopCoordinates = {
   'Wireless': LatLng(23.7843, 90.4106),
   'Banani': LatLng(23.7937, 90.4047),
   'Kakali': LatLng(23.7972, 90.4055),
+  'Kakli': LatLng(23.7972, 90.4055),
   'Chairman Bari': LatLng(23.7846, 90.4044),
   'Sainik Club': LatLng(23.7900, 90.4051),
   'Staff Road': LatLng(23.8009, 90.4068),
   'MES': LatLng(23.8071, 90.4090),
   'Kurmitola': LatLng(23.8127, 90.4108),
   'Shewra': LatLng(23.8164, 90.4189),
+  'Sheora': LatLng(23.8164, 90.4189),
+  'Sheora Bazar': LatLng(23.8200, 90.4140),
+  'Sheoda Bazar': LatLng(23.8200, 90.4140),
   'Kuril Bishwa Road': LatLng(23.8255, 90.4252),
+  'Kuril': LatLng(23.8255, 90.4252),
   'Khilkhet': LatLng(23.8348, 90.4239),
   'Airport': LatLng(23.8478, 90.4029),
   'Jashimuddin': LatLng(23.8541, 90.4011),
   'Rajlakshmi': LatLng(23.8650, 90.4001),
   'Azampur': LatLng(23.8697, 90.3999),
   'House Building': LatLng(23.8724, 90.3993),
+  'Uttara': LatLng(23.8724, 90.3950),
   'Abdullahpur': LatLng(23.8836, 90.3998),
   'Tongi': LatLng(23.8918, 90.3996),
   'Station Road': LatLng(23.8949, 90.4014),
@@ -54,17 +56,24 @@ const Map<String, LatLng> stopCoordinates = {
   'Chandra': LatLng(24.0410, 90.2680),
   'Kamarpara': LatLng(23.8835, 90.3683),
   'Asulia Bazar': LatLng(23.8881, 90.3331),
+  'Ashulia': LatLng(23.8881, 90.3331),
   'Zirabo': LatLng(23.9065, 90.2812),
   'Jamgora': LatLng(23.9203, 90.2588),
   'Fantasy Kingdom': LatLng(23.9335, 90.2393),
+  'Fantasy': LatLng(23.9335, 90.2393),
   'Nandan Park': LatLng(23.9550, 90.2110),
+  'Nandanpark': LatLng(23.9550, 90.2110),
   'Baipayl': LatLng(23.9425, 90.2110),
   'Nobinagar': LatLng(23.8835, 90.2521),
+  'Nabinagar': LatLng(23.8835, 90.2521),
   'Savar': LatLng(23.8580, 90.2666),
   'Hemayetpur': LatLng(23.7926, 90.3083),
   'Amin Bazar': LatLng(23.7884, 90.3380),
   'Dhour': LatLng(23.9000, 90.3815),
   'Dhamrai': LatLng(23.9089, 90.2128),
+  'EPZ': LatLng(23.9050, 90.2370),
+  'Jirani': LatLng(23.9420, 90.2280),
+  'Bashila': LatLng(23.7670, 90.3450),
 
   // --- Mirpur grid ---
   'Ansar Camp': LatLng(23.7958, 90.3543),
@@ -72,12 +81,17 @@ const Map<String, LatLng> stopCoordinates = {
   'Sony Cinema Hall': LatLng(23.8053, 90.3576),
   'Mirpur 2': LatLng(23.8067, 90.3650),
   'Mirpur 10': LatLng(23.8074, 90.3691),
+  'Original 10': LatLng(23.8074, 90.3691),
   'Mirpur 11': LatLng(23.8190, 90.3666),
   'Mirpur 14': LatLng(23.8240, 90.3879),
   'Vashantek': LatLng(23.8329, 90.3924),
+  'Bhashantek': LatLng(23.8329, 90.3924),
   'Purobi': LatLng(23.8224, 90.3727),
   'Kalshi': LatLng(23.8191, 90.3920),
+  'Kalshi Moor': LatLng(23.8191, 90.3920),
+  'Jillur Rahman Flyover': LatLng(23.8222, 90.3940),
   'ECB Square': LatLng(23.8244, 90.4059),
+  'ECB Chottor': LatLng(23.8244, 90.4059),
   'Kazipara': LatLng(23.7975, 90.3739),
   'Shewrapara': LatLng(23.7900, 90.3781),
   'Taltola': LatLng(23.7825, 90.3789),
@@ -87,8 +101,10 @@ const Map<String, LatLng> stopCoordinates = {
   'Darussalam': LatLng(23.7867, 90.3504),
   'Mazar Road': LatLng(23.7913, 90.3508),
   'Shia Masjid': LatLng(23.7647, 90.3578),
+  'Mohammadpur Shia Masjid': LatLng(23.7647, 90.3578),
   'Adabor': LatLng(23.7665, 90.3599),
   'Ring Road': LatLng(23.7679, 90.3615),
+  'Shyamoli Ring Road': LatLng(23.7679, 90.3615),
   'Japan Garden City': LatLng(23.7654, 90.3585),
   'Mohammadpur': LatLng(23.7548, 90.3589),
   'Shankar': LatLng(23.7497, 90.3674),
@@ -104,6 +120,7 @@ const Map<String, LatLng> stopCoordinates = {
   'Nilkhet': LatLng(23.7314, 90.3869),
   'Azimpur': LatLng(23.7281, 90.3865),
   'Bakshi Bazar': LatLng(23.7211, 90.3960),
+  'Chankharpul': LatLng(23.7180, 90.4040),
   'Bata Signal': LatLng(23.7395, 90.3866),
   'Katabon': LatLng(23.7422, 90.3899),
   'Jigatola': LatLng(23.7437, 90.3729),
@@ -117,19 +134,23 @@ const Map<String, LatLng> stopCoordinates = {
   'High Court': LatLng(23.7311, 90.4040),
   'Press Club': LatLng(23.7286, 90.4063),
   'Paltan': LatLng(23.7295, 90.4150),
+  'Bijoy Nagar': LatLng(23.7351, 90.4087),
   'Kakrail': LatLng(23.7392, 90.4082),
   'Shantinagar': LatLng(23.7419, 90.4143),
   'Malibagh': LatLng(23.7457, 90.4198),
   'Mouchak': LatLng(23.7494, 90.4126),
   'Mogbazar': LatLng(23.7470, 90.4023),
   'Sat rasta': LatLng(23.7641, 90.3919),
+  'Satrasta': LatLng(23.7641, 90.3919),
   'Nabisco': LatLng(23.7741, 90.3996),
   'GPO': LatLng(23.7237, 90.4128),
   'Gulistan': LatLng(23.7256, 90.4131),
   'Motijheel': LatLng(23.7284, 90.4189),
   'Arambagh': LatLng(23.7232, 90.4172),
   'Kamalapur': LatLng(23.7320, 90.4262),
+  'Fakirapool': LatLng(23.7295, 90.4220),
   'Fulbaria': LatLng(23.7235, 90.4112),
+  'Mayor Mohammad Flyover': LatLng(23.7195, 90.4180),
   'Golap Shah Mazar': LatLng(23.7253, 90.4108),
   'Sadarghat': LatLng(23.7106, 90.4115),
   'Ray Saheb Bazar': LatLng(23.7140, 90.4083),
@@ -158,7 +179,9 @@ const Map<String, LatLng> stopCoordinates = {
   'Madhya Badda': LatLng(23.7773, 90.4250),
   'Merul Badda': LatLng(23.7723, 90.4210),
   'Rampura Bridge': LatLng(23.7644, 90.4233),
+  'Rampura': LatLng(23.7644, 90.4233),
   'Rampura Bazar': LatLng(23.7613, 90.4229),
+  'Banashree': LatLng(23.7621, 90.4317),
   'Hazipara': LatLng(23.7551, 90.4224),
   'Malibagh Railgate': LatLng(23.7491, 90.4221),
   'Khilgaon': LatLng(23.7458, 90.4283),
@@ -170,13 +193,49 @@ const Map<String, LatLng> stopCoordinates = {
   'Jatrabari': LatLng(23.7113, 90.4337),
   'Shonir Akhra': LatLng(23.6943, 90.4441),
   'Sign Board': LatLng(23.6841, 90.4567),
-  'Banasree': LatLng(23.7621, 90.4317),
+  'Demra': LatLng(23.7240, 90.4640),
+  'Demra Bridge': LatLng(23.7220, 90.4630),
   'Demra Staff Quarter': LatLng(23.7286, 90.4694),
+  'Staff Quarter': LatLng(23.7286, 90.4694),
+  'Meradia': LatLng(23.7460, 90.4404),
+  'Meradia Bazar': LatLng(23.7460, 90.4404),
   'Tarabo': LatLng(23.7437, 90.5085),
+  'Tarabo Bishroad': LatLng(23.7434, 90.5008),
+  'Tarabo Bishworoad': LatLng(23.7434, 90.5008),
+  'Kanchpur': LatLng(23.7034, 90.5132),
+  'Kachpur': LatLng(23.7034, 90.5132),
   'Madanpur': LatLng(23.7165, 90.5535),
   'Sultana Kamal Bridge': LatLng(23.7340, 90.4854),
-  'Tarabo Bishroad': LatLng(23.7434, 90.5008),
-  'Kachpur': LatLng(23.7034, 90.5132),
-  'Meradia Bazar': LatLng(23.7460, 90.4404),
-  'Staff Quarter': LatLng(23.7286, 90.4694),
+  'Bhulta Gausia': LatLng(23.7770, 90.5512),
+  'Bhulta': LatLng(23.7770, 90.5512),
+  'Bhorpa': LatLng(23.7700, 90.5400),
+  'Rupshi': LatLng(23.7575, 90.5170),
+  'Proshika Moor': LatLng(23.7920, 90.3500),
+  'Shialbari': LatLng(23.8020, 90.3565),
 };
+
+/// Convenience: case-insensitive lookup that tries exact, then substring
+/// matches against `stopCoordinates`. Returns `null` if no candidate found.
+LatLng? coordinateForStop(String name) {
+  final q = name.trim();
+  if (q.isEmpty) return null;
+  // Exact case-sensitive first
+  final exact = stopCoordinates[q];
+  if (exact != null) return exact;
+  // Case-insensitive
+  final qLower = q.toLowerCase();
+  for (final entry in stopCoordinates.entries) {
+    if (entry.key.toLowerCase() == qLower) return entry.value;
+  }
+  // Substring fallback (longest match wins)
+  String? bestKey;
+  for (final entry in stopCoordinates.entries) {
+    final k = entry.key.toLowerCase();
+    if (k.contains(qLower) || qLower.contains(k)) {
+      if (bestKey == null || entry.key.length > bestKey.length) {
+        bestKey = entry.key;
+      }
+    }
+  }
+  return bestKey == null ? null : stopCoordinates[bestKey];
+}

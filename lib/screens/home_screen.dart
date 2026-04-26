@@ -181,6 +181,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+              const SizedBox(height: 32),
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Created by Md Rukon Kholifa',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Dhaka Bus Finder',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),

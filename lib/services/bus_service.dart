@@ -56,7 +56,15 @@ class BusService {
   static bool _stopMatches(String stop, String query) =>
       stopNameMatches(stop, query);
 
+  /// Two-pass lookup: prefer an exact (case-insensitive) match before falling
+  /// back to fuzzy matching. Required so picking "Badda" on a route that
+  /// contains both "Uttar Badda" and "Badda" returns the literal "Badda"
+  /// stop, not the substring-matching "Uttar Badda".
   static int _findStopIndex(List<String> stops, String query) {
+    final qLower = query.trim().toLowerCase();
+    for (int i = 0; i < stops.length; i++) {
+      if (stops[i].toLowerCase() == qLower) return i;
+    }
     for (int i = 0; i < stops.length; i++) {
       if (_stopMatches(stops[i], query)) return i;
     }

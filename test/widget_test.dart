@@ -91,6 +91,24 @@ void main() {
     expect(stopNameMatches('Khilgaon', 'Khilgaon Flyover'), isTrue);
   });
 
+  test('BusService.findBuses prefers exact stop "Badda" over "Uttar Badda"',
+      () {
+    // Achim Paribahan route contains 'Uttar Badda', 'Badda', 'Madhya Badda',
+    // 'Merul Badda' in order. Searching the bare "Badda" must pin the
+    // From-stop to the literal "Badda" entry rather than the
+    // substring-matching "Uttar Badda" earlier in the list.
+    final matches = BusService.findBuses('Badda', 'Demra Staff Quarter');
+    final achim = matches.where((m) =>
+        m.route.name.toLowerCase().contains('achim'));
+    expect(achim.isNotEmpty, isTrue,
+        reason: 'Expected an Achim Paribahan match for Badda → Demra Staff Quarter.');
+    for (final m in achim) {
+      expect(m.fromStop, 'Badda',
+          reason:
+              'fromStop should be the literal "Badda", not "${m.fromStop}".');
+    }
+  });
+
   test('Gabtoli → Savar uses median (~14 km, ~৳35), not the A-426 outlier (~৳10)',
       () {
     // A-426 has an apparent transcription error showing Gabtoli↔Savar as

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/bus_service.dart';
+import '../services/fare_disclaimer.dart';
 import '../services/recent_searches.dart';
 import '../widgets/stop_picker.dart';
 import 'bus_search_screen.dart';
@@ -25,6 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _stops = BusService.allStops();
     _loadRecents();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      FareDisclaimer.showOnFirstLaunchIfNeeded(context);
+    });
   }
 
   Future<void> _loadRecents() async {
@@ -106,6 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   textStyle: theme.textTheme.titleMedium,
                 ),
               ),
+              const SizedBox(height: 16),
+              _DisclaimerBanner(),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -220,6 +227,43 @@ class _MenuTile extends StatelessWidget {
                   style: theme.textTheme.bodySmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DisclaimerBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.amber.shade50,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => FareDisclaimer.showDisclaimer(context),
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded,
+                  color: Colors.amber.shade800, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ভাড়া কিলোমিটার অনুযায়ী হিসাব — BRTA ভাড়ার সঙ্গে '
+                  'কিছু পার্থক্য থাকতে পারে। বিস্তারিত দেখতে ট্যাপ করুন।',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: Colors.amber.shade900, height: 1.3),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.amber.shade800, size: 18),
             ],
           ),
         ),

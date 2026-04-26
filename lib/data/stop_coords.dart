@@ -227,15 +227,30 @@ LatLng? coordinateForStop(String name) {
   for (final entry in stopCoordinates.entries) {
     if (entry.key.toLowerCase() == qLower) return entry.value;
   }
-  // Substring fallback (longest match wins)
+  // Substring fallback (longest match wins). Digit-aware so "Mirpur 12"
+  // doesn't get the coordinates for "Mirpur 1".
   String? bestKey;
   for (final entry in stopCoordinates.entries) {
     final k = entry.key.toLowerCase();
-    if (k.contains(qLower) || qLower.contains(k)) {
+    if (_digitAwareContains(k, qLower) ||
+        _digitAwareContains(qLower, k)) {
       if (bestKey == null || entry.key.length > bestKey.length) {
         bestKey = entry.key;
       }
     }
   }
   return bestKey == null ? null : stopCoordinates[bestKey];
+}
+
+bool _digitAwareContains(String haystack, String needle) {
+  if (needle.isEmpty || haystack.isEmpty) return false;
+  final idx = haystack.indexOf(needle);
+  if (idx < 0) return false;
+  final before = idx == 0 ? null : haystack.codeUnitAt(idx - 1);
+  final afterIdx = idx + needle.length;
+  final after =
+      afterIdx >= haystack.length ? null : haystack.codeUnitAt(afterIdx);
+  if (before != null && before >= 0x30 && before <= 0x39) return false;
+  if (after != null && after >= 0x30 && after <= 0x39) return false;
+  return true;
 }

@@ -91,6 +91,22 @@ void main() {
     expect(stopNameMatches('Khilgaon', 'Khilgaon Flyover'), isTrue);
   });
 
+  test('Gabtoli → Savar uses median (~14 km, ~৳35), not the A-426 outlier (~৳10)',
+      () {
+    // A-426 has an apparent transcription error showing Gabtoli↔Savar as
+    // 4 km. All other corridors show ~13.5–14.5 km. Median should pick a
+    // value in the realistic range.
+    final fare = FareService.lookupOfficial('Gabtoli', 'Savar');
+    expect(fare, isNotNull);
+    expect(fare!.isOfficial, isTrue);
+    expect(
+      fare.distanceKm,
+      greaterThanOrEqualTo(12.0),
+      reason: 'Median should NOT pick the A-426 outlier (4 km).',
+    );
+    expect(fare.amount, greaterThanOrEqualTo(30));
+  });
+
   test('PdfCorridor.findStop does not match Mirpur 1 inside Mirpur 10', () {
     // Build a corridor that has Mirpur 10 but not Mirpur 1, and verify
     // findStop('Mirpur 1') returns null instead of the false positive.

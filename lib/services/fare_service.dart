@@ -71,29 +71,36 @@ class FareService {
   }
 
   /// Search every PDF corridor for one that visits both [fromStop] and
-  /// [toStop]. Returns the official fare from the corridor with the
-  /// **shortest** distance between them (in case multiple corridors qualify
-  /// — different bus operators traverse different physical paths between
-  /// the same pair of points).
+  /// [toStop] and pick a representative distance.
+  ///
+  /// Different bus operators traverse different physical paths between the
+  /// same pair of points so multiple corridors can qualify. We collect every
+  /// candidate distance and pick the **median** rather than the minimum:
+  /// using the minimum would let a single transcription error in any one
+  /// corridor (e.g. A-426's anomalous 4 km Gabtoli↔Savar leg) override the
+  /// correct values from all the other corridors. The median is robust to a
+  /// single such outlier.
   static FareResult? lookupOfficial(String fromStop, String toStop) {
-    FareResult? best;
+    final candidates = <_OfficialCandidate>[];
     for (final corridor in pdfCorridors) {
       final f = corridor.findStop(fromStop);
       final t = corridor.findStop(toStop);
       if (f == null || t == null || identical(f, t)) continue;
       final km = (f.km - t.km).abs();
       if (km <= 0) continue;
-      if (best == null || km < best.distanceKm) {
-        best = FareResult(
-          amount: fareFromKm(km),
-          distanceKm: km,
-          source: FareSource.official,
-          corridorCode: corridor.code,
-          corridorLabel: corridor.label,
-        );
-      }
+      candidates.add(_OfficialCandidate(corridor: corridor, km: km));
     }
-    return best;
+    if (candidates.isEmpty) return null;
+
+    candidates.sort((a, b) => a.km.compareTo(b.km));
+    final pick = candidates[candidates.length ~/ 2];
+    return FareResult(
+      amount: fareFromKm(pick.km),
+      distanceKm: pick.km,
+      source: FareSource.official,
+      corridorCode: pick.corridor.code,
+      corridorLabel: pick.corridor.label,
+    );
   }
 
   /// Sum approximate per-leg distances between stops `fromIdx` and `toIdx`,
@@ -115,4 +122,10 @@ class FareService {
         // Generic Dhaka neighbourhood-stop spacing fallback
         1.0;
   }
+}
+
+class _OfficialCandidate {
+  final PdfCorridor corridor;
+  final double km;
+  _OfficialCandidate({required this.corridor, required this.km});
 }

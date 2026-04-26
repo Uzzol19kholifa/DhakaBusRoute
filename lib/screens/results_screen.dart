@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/bus_service.dart';
+import '../services/fare_disclaimer.dart';
 import '../services/transfer_service.dart';
 import 'detail_screen.dart';
 import 'map_screen.dart';
@@ -714,13 +715,19 @@ class _FareCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    !hasResults
-                        ? 'Fare unavailable'
-                        : f?.isOfficial == true
-                            ? 'Official Fare'
-                            : 'Estimated Fare',
-                    style: theme.textTheme.labelLarge,
+                  Row(
+                    children: [
+                      Text(
+                        !hasResults
+                            ? 'Fare unavailable'
+                            : f?.isOfficial == true
+                                ? 'Official Fare'
+                                : 'Estimated Fare',
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      const SizedBox(width: 4),
+                      const FareInfoIcon(size: 14),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(

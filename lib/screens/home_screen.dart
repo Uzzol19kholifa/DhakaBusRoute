@@ -1,0 +1,197 @@
+import 'package:flutter/material.dart';
+
+import '../services/bus_service.dart';
+import '../services/recent_searches.dart';
+import '../widgets/stop_picker.dart';
+import 'results_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? _from;
+  String? _to;
+  late final List<String> _stops;
+  List<RecentSearch> _recents = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _stops = BusService.allStops();
+    _loadRecents();
+  }
+
+  Future<void> _loadRecents() async {
+    final r = await RecentSearches.load();
+    if (!mounted) return;
+    setState(() => _recents = r);
+  }
+
+  void _swap() {
+    setState(() {
+      final tmp = _from;
+      _from = _to;
+      _to = tmp;
+    });
+  }
+
+  Future<void> _search() async {
+    final from = _from;
+    final to = _to;
+    if (from == null || to == null || from == to) return;
+    await RecentSearches.add(from, to);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ResultsScreen(from: from, to: to),
+      ),
+    );
+    _loadRecents();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final canSearch =
+        _from != null && _to != null && _from!.isNotEmpty && _to!.isNotEmpty && _from != _to;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dhaka Bus Finder 🚌'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HeroBanner(),
+              const SizedBox(height: 20),
+              StopPicker(
+                label: 'From',
+                icon: Icons.my_location,
+                value: _from,
+                stops: _stops,
+                onSelected: (v) => setState(() => _from = v),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: IconButton.filledTonal(
+                  onPressed: _swap,
+                  icon: const Icon(Icons.swap_vert_rounded),
+                  tooltip: 'Swap stops',
+                ),
+              ),
+              const SizedBox(height: 8),
+              StopPicker(
+                label: 'To',
+                icon: Icons.location_on,
+                value: _to,
+                stops: _stops,
+                onSelected: (v) => setState(() => _to = v),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: canSearch ? _search : null,
+                icon: const Icon(Icons.search),
+                label: const Text('Find Buses'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: theme.textTheme.titleMedium,
+                ),
+              ),
+              if (_recents.isNotEmpty) ...[
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent searches',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await RecentSearches.clear();
+                        _loadRecents();
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ..._recents.map(
+                  (r) => Card(
+                    elevation: 0,
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: ListTile(
+                      leading: const Icon(Icons.history),
+                      title: Text('${r.from}  →  ${r.to}'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        setState(() {
+                          _from = r.from;
+                          _to = r.to;
+                        });
+                        _search();
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withValues(alpha: 0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.directions_bus_rounded,
+              color: Colors.white, size: 40),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Find your bus',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Pick your start and destination — we\'ll show every bus and the official fare.',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: Colors.white.withValues(alpha: 0.92)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

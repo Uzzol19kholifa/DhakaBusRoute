@@ -45,7 +45,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _kickOffRouting() async {
-    final result = await RoadRoutingService.route(_segmentPoints);
+    final result = await RoadRoutingService.route(
+      _segmentPoints,
+      routeName: widget.match.route.name,
+    );
     if (!mounted) return;
     setState(() {
       _routingLoading = false;

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/bus_service.dart';
+import '../services/fare_disclaimer.dart';
 import '../services/recent_searches.dart';
 import '../widgets/stop_picker.dart';
+import 'bus_search_screen.dart';
+import 'fare_chart_screen.dart';
 import 'results_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _stops = BusService.allStops();
     _loadRecents();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      FareDisclaimer.showOnFirstLaunchIfNeeded(context);
+    });
   }
 
   Future<void> _loadRecents() async {
@@ -104,6 +112,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   textStyle: theme.textTheme.titleMedium,
                 ),
               ),
+              const SizedBox(height: 16),
+              _DisclaimerBanner(),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MenuTile(
+                      icon: Icons.list_alt_rounded,
+                      label: 'Full Fare Chart',
+                      sublabel: 'Browse all PDF corridors',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const FareChartScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MenuTile(
+                      icon: Icons.directions_bus_rounded,
+                      label: 'Search by Bus',
+                      sublabel: 'Find a bus by name',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BusSearchScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               if (_recents.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 Row(
@@ -142,6 +182,151 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+              const SizedBox(height: 32),
+              Center(child: _CreditFooter()),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CreditFooter extends StatelessWidget {
+  static final Uri _profileUri =
+      Uri.parse('https://www.facebook.com/mdrukon.kholifa');
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () async {
+        final ok = await launchUrl(
+          _profileUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!ok && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open Facebook profile')),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Created by Md Rukon Kholifa',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                    decorationColor: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.open_in_new_rounded,
+                  size: 12,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Dhaka Bus Finder',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant
+                    .withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String sublabel;
+  final VoidCallback onTap;
+
+  const _MenuTile({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: theme.colorScheme.primary),
+              const SizedBox(height: 8),
+              Text(label,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(sublabel,
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DisclaimerBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.amber.shade50,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => FareDisclaimer.showDisclaimer(context),
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded,
+                  color: Colors.amber.shade800, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ভাড়া কিলোমিটার অনুযায়ী হিসাব — BRTA ভাড়ার সঙ্গে '
+                  'কিছু পার্থক্য থাকতে পারে। বিস্তারিত দেখতে ট্যাপ করুন।',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: Colors.amber.shade900, height: 1.3),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.amber.shade800, size: 18),
             ],
           ),
         ),

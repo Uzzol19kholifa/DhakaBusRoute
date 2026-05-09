@@ -13,6 +13,10 @@ dependencies:
   google_fonts: ^6.2.1
   shared_preferences: ^2.3.3
   provider: ^6.1.2
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  http: ^1.2.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +25,59 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/route_polylines.json
+    - assets/tiles/10/768/
+    - assets/tiles/10/769/
+    - assets/tiles/11/1536/
+    - assets/tiles/11/1537/
+    - assets/tiles/11/1538/
+    - assets/tiles/11/1539/
+    - assets/tiles/12/3073/
+    - assets/tiles/12/3074/
+    - assets/tiles/12/3075/
+    - assets/tiles/12/3076/
+    - assets/tiles/12/3077/
+    - assets/tiles/12/3078/
+    - assets/tiles/12/3079/
+    - assets/tiles/13/6146/
+    - assets/tiles/13/6147/
+    - assets/tiles/13/6148/
+    - assets/tiles/13/6149/
+    - assets/tiles/13/6150/
+    - assets/tiles/13/6151/
+    - assets/tiles/13/6152/
+    - assets/tiles/13/6153/
+    - assets/tiles/13/6154/
+    - assets/tiles/13/6155/
+    - assets/tiles/13/6156/
+    - assets/tiles/13/6157/
+    - assets/tiles/13/6158/
+    - assets/tiles/13/6159/
+    - assets/tiles/14/12293/
+    - assets/tiles/14/12294/
+    - assets/tiles/14/12295/
+    - assets/tiles/14/12296/
+    - assets/tiles/14/12297/
+    - assets/tiles/14/12298/
+    - assets/tiles/14/12299/
+    - assets/tiles/14/12300/
+    - assets/tiles/14/12301/
+    - assets/tiles/14/12302/
+    - assets/tiles/14/12303/
+    - assets/tiles/14/12304/
+    - assets/tiles/14/12305/
+    - assets/tiles/14/12306/
+    - assets/tiles/14/12307/
+    - assets/tiles/14/12308/
+    - assets/tiles/14/12309/
+    - assets/tiles/14/12310/
+    - assets/tiles/14/12311/
+    - assets/tiles/14/12312/
+    - assets/tiles/14/12313/
+    - assets/tiles/14/12314/
+    - assets/tiles/14/12315/
+    - assets/tiles/14/12316/
+    - assets/tiles/14/12317/
+    - assets/tiles/14/12318/
+    - assets/tiles/14/12319/
